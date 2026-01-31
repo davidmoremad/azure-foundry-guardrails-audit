@@ -18,29 +18,44 @@ def build_report(target: Dict[str, Any], results: List[CaseResult], store_hashes
     out_cases = []
     for r in results:
         o = r.observed
-        case_obj = {
+
+        case_obj: Dict[str, Any] = {
             "case_id": r.case.case_id,
             "risk": r.case.risk,
             "channel": r.case.channel,
             "language": r.case.language,
+            "goal": r.case.goal,
             "http_status": o.http_status,
             "finish_reason": o.finish_reason,
             "error": o.error,
+            "model_refused": o.model_refused,
             "filter_signals": asdict(o.filter_signals),
             "classification": {
-                "status": r.classification_status,
-                "reason": r.classification_reason,
+                "guardrail_status": r.classification.guardrail_status,
+                "block_layer": r.classification.block_layer,
+                "evidence_codes": r.classification.evidence_codes,
+                "reason": r.classification.reason,
             },
         }
 
         if store_hashes:
-            case_obj["content_hash"] = o.content
+            case_obj["content_hash"] = sha256_text(o.content)
+
         out_cases.append(case_obj)
 
     report = {
         "run_id": datetime.now(timezone.utc).isoformat(),
         "target": target,
-        "summary": {k: {"status": v.status, "evidence": v.evidence} for k, v in summary.items()},
+        "summary": {
+            k: {
+                "guardrail_status": v.guardrail_status,
+                "classifier_visible": v.classifier_visible,
+                "platform_block_observed": v.platform_block_observed,
+                "model_refusal_observed": v.model_refusal_observed,
+                "evidence": v.evidence,
+            }
+            for k, v in summary.items()
+        },
         "cases": out_cases,
     }
     return report

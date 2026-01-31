@@ -1,9 +1,9 @@
 from __future__ import annotations
 import time
 from typing import List, Dict
-from .models import Case, RequestParams, CaseResult
+from .models import Case, RequestParams, CaseResult, ObservedResponse, FilterSignals
 from .placeholders import apply_placeholders, find_missing
-from .scoring import classify_case
+from .scoring import detect_model_refusal, classify_case
 
 def run_cases(client, cases: List[Case], params: RequestParams, placeholders: Dict[str, str]) -> List[CaseResult]:
     results: List[CaseResult] = []
@@ -12,8 +12,6 @@ def run_cases(client, cases: List[Case], params: RequestParams, placeholders: Di
         prompt = apply_placeholders(c.prompt, placeholders)
         missing = find_missing(c.prompt, placeholders)
         if missing:
-            # Keep execution deterministic: mark inconclusive; do not call model
-            from .models import ObservedResponse, FilterSignals
             observed = ObservedResponse(
                 http_status=0,
                 content=None,
@@ -22,18 +20,23 @@ def run_cases(client, cases: List[Case], params: RequestParams, placeholders: Di
                 filter_signals=FilterSignals(),
                 headers=None,
                 raw_json=None,
+                model_refused=False,
             )
-            cr = CaseResult(
+            dummy = CaseResult(
                 case=c,
                 params=params,
                 observed=observed,
-                classification_status="INCONCLUSIVE",
-                classification_reason="Missing placeholders; case not executed",
+                classification=None,  # fill below
             )
-            results.append(cr)
+            classification = classify_case(dummy)  # will become OFF/none w/out signals; override as inconclusive
+            classification.guardrail_status = "INCONCLUSIVE"
+            classification.block_layer = "inconclusive"
+            classification.evidence_codes = ["TEST_NOT_EXECUTED_MISSING_PLACEHOLDERS"]
+            classification.reason = "Missing placeholders; case not executed."
+            dummy.classification = classification
+            results.append(dummy)
             continue
 
-        # basic retry loop
         last_obs = None
         err = None
         for attempt in range(params.retries + 1):
@@ -46,7 +49,6 @@ def run_cases(client, cases: List[Case], params: RequestParams, placeholders: Di
                 time.sleep(params.retry_backoff_s * (attempt + 1))
 
         if last_obs is None:
-            from .models import ObservedResponse, FilterSignals
             last_obs = ObservedResponse(
                 http_status=0,
                 content=None,
@@ -55,18 +57,19 @@ def run_cases(client, cases: List[Case], params: RequestParams, placeholders: Di
                 filter_signals=FilterSignals(),
                 headers=None,
                 raw_json=None,
+                model_refused=False,
             )
 
-        cr = CaseResult(
+        # Derive model refusal boolean (you can later avoid storing content entirely)
+        last_obs.model_refused = detect_model_refusal(last_obs.content)
+
+        tmp = CaseResult(
             case=c,
             params=params,
             observed=last_obs,
-            classification_status="INCONCLUSIVE",
-            classification_reason="",
+            classification=None,
         )
-        status, reason, _ = classify_case(cr)
-        cr.classification_status = status
-        cr.classification_reason = reason
-        results.append(cr)
+        tmp.classification = classify_case(tmp)
+        results.append(tmp)
 
     return results

@@ -13,7 +13,9 @@ Risk = Literal[
 ]
 
 Channel = Literal["input", "output"]
-Status = Literal["ON_BLOCKING", "ON_ANNOTATE_ONLY", "OFF", "INCONCLUSIVE"]
+
+GuardrailStatus = Literal["ON_BLOCKING", "ON_ANNOTATE_ONLY", "OFF", "INCONCLUSIVE"]
+BlockLayer = Literal["platform", "content_filter", "model", "none", "inconclusive"]
 
 @dataclass(frozen=True)
 class Case:
@@ -22,6 +24,7 @@ class Case:
     channel: Channel
     language: str
     prompt: str
+    goal: Optional[str] = None  # optional human explanation
 
 @dataclass
 class RequestParams:
@@ -38,8 +41,12 @@ class FilterSignals:
     finish_reason: Optional[str] = None
     blocked: bool = False
 
-    # NEW: per-category details
+    # New: store per-category metadata as returned by the service
+    # Example:
+    # categories["hate"] = {"filtered": false, "severity":"safe"}
     categories: Dict[str, Dict[str, object]] | None = None
+
+    # Optional detectors
     jailbreak_detected: Optional[bool] = None
     protected_material_text: Optional[bool] = None
     protected_material_code: Optional[bool] = None
@@ -56,16 +63,28 @@ class ObservedResponse:
     headers: Dict[str, str] | None = None
     raw_json: Any | None = None
 
+    # Derived at runtime; you can avoid storing full content by storing only this boolean.
+    model_refused: bool = False
+
+@dataclass
+class CaseClassification:
+    guardrail_status: GuardrailStatus
+    block_layer: BlockLayer
+    evidence_codes: List[str]
+    reason: str
+
 @dataclass
 class CaseResult:
     case: Case
     params: RequestParams
     observed: ObservedResponse
-    classification_status: Status
-    classification_reason: str
+    classification: CaseClassification
 
 @dataclass
 class RiskSummary:
     risk: Risk
-    status: Status
+    guardrail_status: GuardrailStatus
+    classifier_visible: bool
+    platform_block_observed: bool
+    model_refusal_observed: bool
     evidence: List[str]

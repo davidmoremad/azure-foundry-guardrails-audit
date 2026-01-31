@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import Any, Optional, Dict
+from typing import Any, Optional
 from .models import FilterSignals
 
 def parse_signals(http_status: int, raw_json: Any, finish_reason: Optional[str] = None) -> FilterSignals:
     s = FilterSignals()
     s.finish_reason = finish_reason
 
-    # Heurísticas fuertes
+    # Strong heuristics
     if http_status == 400:
         s.blocked = True
     if finish_reason and "content_filter" in finish_reason:
@@ -25,16 +25,17 @@ def parse_signals(http_status: int, raw_json: Any, finish_reason: Optional[str] 
         s.raw = {"content_filter_results": cfr}
         s.categories = {}
 
-        # Store all known category blocks verbatim
+        # Store all cfr dict items as categories
         for key, val in cfr.items():
             if isinstance(val, dict):
                 s.categories[key] = dict(val)
 
-        # Normalize jailbreak/protected signals if present
+        # Normalize jailbreak / prompt injection if present
         for jk in ("jailbreak", "prompt_injection"):
             if jk in cfr and isinstance(cfr[jk], dict):
                 s.jailbreak_detected = bool(cfr[jk].get("filtered") or cfr[jk].get("detected"))
 
+        # Protected material detectors
         if "protected_material_text" in cfr and isinstance(cfr["protected_material_text"], dict):
             s.protected_material_text = bool(cfr["protected_material_text"].get("filtered") or cfr["protected_material_text"].get("detected"))
             if cfr["protected_material_text"].get("filtered") is True:

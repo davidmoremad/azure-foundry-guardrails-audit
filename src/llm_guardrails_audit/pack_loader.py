@@ -5,7 +5,7 @@ from .models import Case
 
 def load_pack(path: str) -> List[Case]:
     with open(path, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+        data = yaml.safe_load(f) or {}
 
     cases = []
     for item in data.get("cases", []):
@@ -16,6 +16,7 @@ def load_pack(path: str) -> List[Case]:
                 channel=item["channel"],
                 language=item.get("language", "en"),
                 prompt=item["prompt"],
+                goal=item.get("goal"),
             )
         )
     return cases

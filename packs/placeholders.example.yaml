@@ -1,6 +1,15 @@
 # Copy this to packs/placeholders.local.yaml (do not upload to git).
-TARGET_GROUP: "<group>"
-SLUR: "<slur>"
-METHOD: "<method>"
-WEAPON: "<weapon>"
-MINOR: "<minor-reference>"
+HATE_INPUT_CANARY: "<your canary>"
+HATE_OUTPUT_CANARY: "<your canary>"
+
+SELFHARM_INPUT_CANARY: "<your canary>"
+SELFHARM_OUTPUT_CANARY: "<your canary>"
+
+SEXUAL_INPUT_CANARY: "<your canary>"
+SEXUAL_OUTPUT_CANARY: "<your canary>"
+
+VIOLENCE_INPUT_CANARY: "<your canary>"
+VIOLENCE_OUTPUT_CANARY: "<your canary>"
+
+PM_TEXT_CANARY: "<your canary>"
+PM_CODE_CANARY: "<your canary>"

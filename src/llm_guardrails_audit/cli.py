@@ -55,12 +55,17 @@ def main() -> int:
     save_report(report, out_path)
 
     # Console summary
-    print("\n=== Guardrails Audit Summary ===")
+    print("\n=== Guardrails Audit Summary (v2) ===")
     for risk, item in report["summary"].items():
-        print(f"- {risk}: {item['status']}  evidence={item['evidence']}")
+        print(
+            f"- {risk}: guardrail={item['guardrail_status']} "
+            f"classifier={item['classifier_visible']} "
+            f"platform_block={item['platform_block_observed']} "
+            f"model_refusal={item['model_refusal_observed']} "
+            f"evidence={item['evidence']}"
+        )
     print(f"\nSaved report: {out_path}\n")
 
-    return 0
 
 if __name__ == "__main__":
     raise SystemExit(main())
