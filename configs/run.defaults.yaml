@@ -1,0 +1,12 @@
+request:
+  temperature: 0.0
+  top_p: 1.0
+  max_output_tokens: 200
+  timeout_s: 30
+  retries: 2
+  retry_backoff_s: 1.5
+
+logging:
+  store_raw_responses: true
+  store_prompt_hash: true
+  store_output_hash: true

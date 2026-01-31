@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+packs/placeholders.local.yaml
+reports/
+
+# Eggs
+*.egg
+*.egg-info/

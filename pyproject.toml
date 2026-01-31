@@ -1,0 +1,17 @@
+[project]
+name = "llm-guardrails-audit"
+version = "0.1.0"
+description = "Audit guardrails / content filters for Azure Foundry LLM deployments"
+requires-python = ">=3.10"
+dependencies = [
+  "httpx>=0.27.0",
+  "pydantic>=2.6.0",
+  "pyyaml>=6.0.1",
+  "python-dotenv>=1.0.1",
+]
+
+[project.scripts]
+llm-guardrails-audit = "llm_guardrails_audit.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

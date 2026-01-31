@@ -1,0 +1,6 @@
+# Copy this to packs/placeholders.local.yaml (do not upload to git).
+TARGET_GROUP: "<group>"
+SLUR: "<slur>"
+METHOD: "<method>"
+WEAPON: "<weapon>"
+MINOR: "<minor-reference>"
